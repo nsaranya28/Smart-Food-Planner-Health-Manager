@@ -132,11 +132,7 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                 <span>HealthPlanner</span>
             </a>
             <ul class="nav-links">
-                <li><a href="index.php">Dashboard</a></li>
-                <li><a href="recipes.php">Recipes</a></li>
-                <li><a href="grocery.php">Grocery List</a></li>
                 <li><a href="nutrition.php" class="active">Nutrition</a></li>
-                <li><a href="discovery.php">Discovery</a></li>
             </ul>
         </div>
     </nav>
