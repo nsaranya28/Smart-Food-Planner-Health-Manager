@@ -191,7 +191,9 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                         </div>
                     </div>
                 </div>
-                <canvas id="weeklyChart" height="350"></canvas>
+                <div style="position: relative; height: 350px; width: 100%;">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
             </div>
 
             <!-- Macro Breakdown -->
