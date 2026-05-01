@@ -132,7 +132,7 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                 <span>HealthPlanner</span>
             </a>
             <ul class="nav-links">
-                <li><a href="nutrition.php" class="active">Nutrition</a></li>
+                <li><a href="index.php" class="active">Nutrition Tracker</a></li>
             </ul>
         </div>
     </nav>
@@ -231,9 +231,6 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
         <section style="margin-top: 4rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 style="font-weight: 800; font-size: 2rem;">Recent Food Logs</h2>
-                <a href="recipes.php" class="btn btn-outline btn-sm" style="font-size: 0.875rem;">
-                    <i class="fas fa-plus"></i> Add New Log
-                </a>
             </div>
             
             <div class="card" style="padding: 0; overflow: hidden;">
@@ -254,7 +251,6 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                                         <i class="fas fa-calendar-day" style="font-size: 3rem; opacity: 0.2;"></i>
                                     </div>
                                     <p style="color: var(--text-muted); font-size: 1.1rem;">No logs for today yet.</p>
-                                    <a href="recipes.php" style="color: var(--primary); font-weight: 600; text-decoration: none; margin-top: 0.5rem; display: inline-block;">Start logging your meals</a>
                                 </td>
                             </tr>
                         <?php else: ?>
