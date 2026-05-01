@@ -199,6 +199,10 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                 <h3 style="font-weight: 700; margin-bottom: 2rem;">Macro Distribution</h3>
                 <div style="flex-grow: 1; position: relative; min-height: 250px;">
                     <canvas id="macroChart"></canvas>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total</div>
+                        <div style="font-size: 1.5rem; font-weight: 800;"><?php echo $totals['prot'] + $totals['carb'] + $totals['fat']; ?>g</div>
+                    </div>
                 </div>
                 <div style="margin-top: 2rem; display: grid; gap: 1rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f8fafc; border-radius: 1rem;">
@@ -298,26 +302,35 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
 
         // Weekly Progress Chart
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+        const gradient = weeklyCtx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.8)');
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0.2)');
+
         new Chart(weeklyCtx, {
-            type: 'pie',
+            type: 'bar',
             data: {
                 labels: <?php echo $weekly_labels; ?>,
                 datasets: [{
                     label: 'Calories',
                     data: <?php echo $weekly_values; ?>,
-                    backgroundColor: [
-                        '#10b981', '#3b82f6', '#ef4444', '#f59e0b', 
-                        '#8b5cf6', '#ec4899', '#06b6d4'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
+                    backgroundColor: gradient,
+                    borderRadius: 8,
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true, position: 'right' }
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { borderDash: [5, 5], drawBorder: false },
+                        ticks: { stepSize: 500 }
+                    },
+                    x: { grid: { display: false } }
                 }
             }
         });
@@ -325,23 +338,23 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
         // Macro Distribution Chart
         const macroCtx = document.getElementById('macroChart').getContext('2d');
         new Chart(macroCtx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
                 labels: ['Protein', 'Carbs', 'Fat'],
                 datasets: [{
                     data: [<?php echo $totals['prot']; ?>, <?php echo $totals['carb']; ?>, <?php echo $totals['fat']; ?>],
                     backgroundColor: ['#10b981', '#3b82f6', '#ef4444'],
                     hoverOffset: 10,
-                    borderWidth: 2,
-                    borderColor: '#ffffff',
-                    borderRadius: 0
+                    borderWidth: 0,
+                    borderRadius: 10
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '80%',
                 plugins: {
-                    legend: { display: true, position: 'bottom' }
+                    legend: { display: false }
                 }
             }
         });
