@@ -298,42 +298,26 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
 
         // Weekly Progress Chart
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
-        const gradient = weeklyCtx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-        gradient.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
-
         new Chart(weeklyCtx, {
-            type: 'line',
+            type: 'pie',
             data: {
                 labels: <?php echo $weekly_labels; ?>,
                 datasets: [{
                     label: 'Calories',
                     data: <?php echo $weekly_values; ?>,
-                    backgroundColor: gradient,
-                    borderColor: '#10b981',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#10b981',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
+                    backgroundColor: [
+                        '#10b981', '#3b82f6', '#ef4444', '#f59e0b', 
+                        '#8b5cf6', '#ec4899', '#06b6d4'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        grid: { borderDash: [5, 5], drawBorder: false },
-                        ticks: { stepSize: 500 }
-                    },
-                    x: { grid: { display: false } }
+                    legend: { display: true, position: 'right' }
                 }
             }
         });
