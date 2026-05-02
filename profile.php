@@ -41,24 +41,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-    <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
             <a href="index.php" class="logo">
                 <i class="fas fa-utensils"></i>
                 <span>HealthPlanner</span>
             </a>
-            <ul class="nav-links">
-                <li><a href="index.php">Dashboard</a></li>
-                <li><a href="recipes.php">Recipes</a></li>
-                <li><a href="grocery.php">Grocery List</a></li>
-                <li><a href="nutrition.php">Nutrition</a></li>
-                <li><a href="discovery.php">Discovery</a></li>
-            </ul>
-            <div class="auth-btns">
-                <a href="profile.php" class="btn btn-outline active">Profile</a>
-                <a href="logout.php" class="btn btn-primary">Logout</a>
+            
+            <div class="search-container">
+                <form action="search.php" method="GET" class="search-form">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="q" class="search-input" placeholder="Search foods, recipes..." required>
+                </form>
             </div>
+
+            <ul class="nav-links">
+                <li><a href="index.php">Nutrition Tracker</a></li>
+                <li><a href="profile.php" class="active">Profile</a></li>
+                <li><a href="logout.php">Logout</a></li>
+            </ul>
         </div>
     </nav>
 

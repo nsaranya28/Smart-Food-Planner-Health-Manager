@@ -131,8 +131,18 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                 <i class="fas fa-utensils"></i>
                 <span>HealthPlanner</span>
             </a>
+            
+            <div class="search-container">
+                <form action="search.php" method="GET" class="search-form">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="q" class="search-input" placeholder="Search foods, recipes..." required>
+                </form>
+            </div>
+
             <ul class="nav-links">
                 <li><a href="index.php" class="active">Nutrition Tracker</a></li>
+                <li><a href="profile.php">Profile</a></li>
+                <li><a href="logout.php">Logout</a></li>
             </ul>
         </div>
     </nav>
