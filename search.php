@@ -14,9 +14,27 @@ $sql = "SELECT * FROM recipes WHERE 1=1";
 $params = [];
 
 if (!empty($query)) {
-    $sql .= " AND (name LIKE ? OR instructions LIKE ?)";
-    $params[] = "%$query%";
-    $params[] = "%$query%";
+    // Check if the query matches any category name
+    $categories_list = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Fastfood', 'Chat items', 'Juice items'];
+    $matching_cat = '';
+    foreach ($categories_list as $cl) {
+        if (strtolower($cl) === strtolower(trim($query))) {
+            $matching_cat = $cl;
+            break;
+        }
+    }
+
+    if ($matching_cat) {
+        // If query is "breakfast", show all in breakfast category OR matching name
+        $sql .= " AND (category = ? OR name LIKE ? OR instructions LIKE ?)";
+        $params[] = $matching_cat;
+        $params[] = "%$query%";
+        $params[] = "%$query%";
+    } else {
+        $sql .= " AND (name LIKE ? OR instructions LIKE ?)";
+        $params[] = "%$query%";
+        $params[] = "%$query%";
+    }
 }
 
 if (!empty($category)) {
@@ -147,9 +165,9 @@ $results = $stmt->fetchAll();
                 <?php 
                 $categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Fastfood', 'Chat items', 'Juice items'];
                 ?>
-                <a href="search.php?q=<?php echo urlencode($query); ?>" class="filter-chip <?php echo empty($category) ? 'active' : ''; ?>">All Items</a>
+                <a href="search.php" class="filter-chip <?php echo empty($category) ? 'active' : ''; ?>">All Items</a>
                 <?php foreach ($categories as $cat): ?>
-                    <a href="search.php?q=<?php echo urlencode($query); ?>&category=<?php echo urlencode($cat); ?>" 
+                    <a href="search.php?category=<?php echo urlencode($cat); ?>" 
                        class="filter-chip <?php echo $category === $cat ? 'active' : ''; ?>">
                         <?php echo $cat; ?>
                     </a>
