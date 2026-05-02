@@ -99,7 +99,7 @@ try {
     $pdo->exec("DELETE FROM recipes"); // Clean start
     
     foreach ($foodItems as $item) {
-        $stmt->execute([$item[0], $item[1], $item[2], $item[3], $item[4], $item[5], 15, 'Ready to eat or follow basic prep.']);
+        $stmt->execute([$item[0], 'Breakfast', $item[2], $item[3], $item[4], $item[5], 15, 'Ready to eat or follow basic prep.']);
     }
 
     echo "Successfully imported " . count($foodItems) . " food items!";
