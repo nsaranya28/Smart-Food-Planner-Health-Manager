@@ -223,6 +223,13 @@ $results = $stmt->fetchAll();
                                     <span style="font-weight: 800; color: var(--danger);"><?php echo $recipe['fat']; ?>g</span>
                                 </div>
                             </div>
+                            
+                            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.75rem;">
+                                <div title="Fiber"><i class="fas fa-seedling" style="color: #10b981;"></i> Fiber: <strong><?php echo $recipe['fiber']; ?>g</strong></div>
+                                <div title="Vitamin C"><i class="fas fa-citrus" style="color: #f59e0b;"></i> Vit C: <strong><?php echo $recipe['vitamin_c']; ?>mg</strong></div>
+                                <div title="Calcium"><i class="fas fa-bone" style="color: #6366f1;"></i> Calcium: <strong><?php echo $recipe['calcium']; ?>mg</strong></div>
+                                <div title="Iron"><i class="fas fa-magnet" style="color: #ef4444;"></i> Iron: <strong><?php echo $recipe['iron']; ?>mg</strong></div>
+                            </div>
                         </div>
                         
                         <button onclick="logFood(<?php echo $recipe['id']; ?>, '<?php echo addslashes($recipe['name']); ?>', <?php echo $recipe['calories']; ?>, <?php echo $recipe['protein']; ?>, <?php echo $recipe['carbs']; ?>, <?php echo $recipe['fat']; ?>)" class="btn log-btn">
