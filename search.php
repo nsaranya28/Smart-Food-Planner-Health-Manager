@@ -203,15 +203,26 @@ $results = $stmt->fetchAll();
                             </span>
                         </div>
                         
-                        <div class="recipe-stats">
-                            <div class="stat-item"><i class="fas fa-fire"></i> <?php echo $recipe['calories']; ?> kcal</div>
-                            <div class="stat-item"><i class="fas fa-clock"></i> <?php echo $recipe['cooking_time']; ?> min</div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.8rem; font-weight: 600;">
-                            <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 1rem;">P: <?php echo $recipe['protein']; ?>g</span>
-                            <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 1rem;">C: <?php echo $recipe['carbs']; ?>g</span>
-                            <span style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 1rem;">F: <?php echo $recipe['fat']; ?>g</span>
+                        <div class="nutrition-facts" style="background: #f8fafc; border: 1px solid var(--border); border-radius: 1rem; padding: 1rem; margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem;">Nutrition Details</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">Calories</span>
+                                    <span style="font-weight: 800; color: var(--text-main);"><?php echo $recipe['calories']; ?> kcal</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">Protein</span>
+                                    <span style="font-weight: 800; color: var(--primary-dark);"><?php echo $recipe['protein']; ?>g</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">Carbs</span>
+                                    <span style="font-weight: 800; color: var(--accent);"><?php echo $recipe['carbs']; ?>g</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">Fat</span>
+                                    <span style="font-weight: 800; color: var(--danger);"><?php echo $recipe['fat']; ?>g</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <button onclick="logFood(<?php echo $recipe['id']; ?>, '<?php echo addslashes($recipe['name']); ?>', <?php echo $recipe['calories']; ?>, <?php echo $recipe['protein']; ?>, <?php echo $recipe['carbs']; ?>, <?php echo $recipe['fat']; ?>)" class="btn log-btn">
