@@ -121,7 +121,10 @@ $results = $stmt->fetchAll();
             <div class="search-container">
                 <form action="search.php" method="GET" class="search-form">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" name="q" class="search-input" value="<?php echo htmlspecialchars($query); ?>" placeholder="Search foods, recipes..." required>
+                    <?php if (!empty($category)): ?>
+                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>">
+                    <?php endif; ?>
+                    <input type="text" name="q" class="search-input" value="<?php echo htmlspecialchars($query); ?>" placeholder="Search foods, recipes...">
                 </form>
             </div>
 

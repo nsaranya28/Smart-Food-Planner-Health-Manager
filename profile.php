@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="search-container">
                 <form action="search.php" method="GET" class="search-form">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" name="q" class="search-input" placeholder="Search foods, recipes..." required>
+                    <input type="text" name="q" class="search-input" placeholder="Search foods, recipes...">
                 </form>
             </div>
 

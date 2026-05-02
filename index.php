@@ -135,7 +135,7 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
             <div class="search-container">
                 <form action="search.php" method="GET" class="search-form">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" name="q" class="search-input" placeholder="Search foods, recipes..." required>
+                    <input type="text" name="q" class="search-input" placeholder="Search foods, recipes...">
                 </form>
             </div>
 
