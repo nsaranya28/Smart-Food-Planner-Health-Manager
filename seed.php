@@ -17,7 +17,8 @@ try {
             'carb' => 45.0,
             'fat' => 22.0,
             'img' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop',
-            'inst' => '1. Rinse quinoa. 2. Boil with water for 15 mins. 3. Dice avocado and mix with lemon juice. 4. Combine and serve.'
+            'inst' => '1. Rinse quinoa. 2. Boil with water for 15 mins. 3. Dice avocado and mix with lemon juice. 4. Combine and serve.',
+            'cat' => 'Lunch'
         ],
         [
             'name' => 'Grilled Chicken Breast',
@@ -27,7 +28,8 @@ try {
             'carb' => 5.0,
             'fat' => 10.0,
             'img' => 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop',
-            'inst' => '1. Season chicken with salt and pepper. 2. Grill for 10-12 mins each side. 3. Serve with steamed broccoli.'
+            'inst' => '1. Season chicken with salt and pepper. 2. Grill for 10-12 mins each side. 3. Serve with steamed broccoli.',
+            'cat' => 'Dinner'
         ],
         [
             'name' => 'Berry Smoothie Bowl',
@@ -37,14 +39,15 @@ try {
             'carb' => 40.0,
             'fat' => 5.0,
             'img' => 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400&h=300&fit=crop',
-            'inst' => '1. Blend frozen berries with yogurt. 2. Pour into bowl. 3. Top with granola and chia seeds.'
+            'inst' => '1. Blend frozen berries with yogurt. 2. Pour into bowl. 3. Top with granola and chia seeds.',
+            'cat' => 'Breakfast'
         ]
     ];
 
-    $stmt = $pdo->prepare("INSERT INTO recipes (name, cooking_time, calories, protein, carbs, fat, image, instructions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO recipes (name, cooking_time, calories, protein, carbs, fat, image, instructions, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     foreach ($recipes as $r) {
-        $stmt->execute([$r['name'], $r['time'], $r['cal'], $r['prot'], $r['carb'], $r['fat'], $r['img'], $r['inst']]);
+        $stmt->execute([$r['name'], $r['time'], $r['cal'], $r['prot'], $r['carb'], $r['fat'], $r['img'], $r['inst'], $r['cat']]);
     }
 
     echo "Successfully seeded " . count($recipes) . " recipes!<br>";

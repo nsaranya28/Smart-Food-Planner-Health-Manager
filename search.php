@@ -7,13 +7,26 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $query = $_GET['q'] ?? '';
+$category = $_GET['category'] ?? '';
 $results = [];
 
+$sql = "SELECT * FROM recipes WHERE 1=1";
+$params = [];
+
 if (!empty($query)) {
-    $stmt = $pdo->prepare("SELECT * FROM recipes WHERE name LIKE ? OR instructions LIKE ?");
-    $stmt->execute(["%$query%", "%$query%"]);
-    $results = $stmt->fetchAll();
+    $sql .= " AND (name LIKE ? OR instructions LIKE ?)";
+    $params[] = "%$query%";
+    $params[] = "%$query%";
 }
+
+if (!empty($category)) {
+    $sql .= " AND category = ?";
+    $params[] = $category;
+}
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$results = $stmt->fetchAll();
 
 ?>
 <!DOCTYPE html>
@@ -70,6 +83,30 @@ if (!empty($query)) {
             background: var(--primary);
             color: white;
         }
+        .filter-section {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .filter-chip {
+            padding: 0.6rem 1.25rem;
+            border-radius: 2rem;
+            background: #fff;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .filter-chip:hover, .filter-chip.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
     </style>
 </head>
 <body>
@@ -98,8 +135,23 @@ if (!empty($query)) {
 
     <div class="search-header">
         <div class="container">
-            <h1>Search results for "<?php echo htmlspecialchars($query); ?>"</h1>
-            <p class="text-muted"><?php echo count($results); ?> items found</p>
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1><?php echo !empty($query) ? 'Search results for "' . htmlspecialchars($query) . '"' : 'Find Healthy Food'; ?></h1>
+                <p class="text-muted"><?php echo count($results); ?> items found <?php echo !empty($category) ? 'in ' . htmlspecialchars($category) : ''; ?></p>
+            </div>
+
+            <div class="filter-section">
+                <?php 
+                $categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Fastfood', 'Chat items', 'Juice items'];
+                ?>
+                <a href="search.php?q=<?php echo urlencode($query); ?>" class="filter-chip <?php echo empty($category) ? 'active' : ''; ?>">All Items</a>
+                <?php foreach ($categories as $cat): ?>
+                    <a href="search.php?q=<?php echo urlencode($query); ?>&category=<?php echo urlencode($cat); ?>" 
+                       class="filter-chip <?php echo $category === $cat ? 'active' : ''; ?>">
+                        <?php echo $cat; ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
 
@@ -123,7 +175,12 @@ if (!empty($query)) {
                             </div>
                         <?php endif; ?>
                         
-                        <h3 style="font-weight: 700;"><?php echo htmlspecialchars($recipe['name']); ?></h3>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <h3 style="font-weight: 700;"><?php echo htmlspecialchars($recipe['name']); ?></h3>
+                            <span style="font-size: 0.75rem; background: var(--primary-light); color: var(--primary-dark); padding: 0.2rem 0.6rem; border-radius: 0.5rem; font-weight: 600;">
+                                <?php echo htmlspecialchars($recipe['category']); ?>
+                            </span>
+                        </div>
                         
                         <div class="recipe-stats">
                             <div class="stat-item"><i class="fas fa-fire"></i> <?php echo $recipe['calories']; ?> kcal</div>
