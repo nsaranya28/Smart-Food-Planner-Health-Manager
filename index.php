@@ -39,22 +39,40 @@ $cal_percentage = min(100, ($totals['cal'] / $daily_goal) * 100);
 
 // Fetch weekly data (last 7 days)
 $weekly_data = [];
+$start_week = date('Y-m-d', strtotime("-6 days"));
+$stmt = $pdo->prepare("SELECT log_date, SUM(calories) as total_cal FROM daily_intake WHERE user_id = ? AND log_date >= ? GROUP BY log_date");
+$stmt->execute([$user_id, $start_week]);
+$weekly_results = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
 for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-$i days"));
     $day_name = date('D', strtotime($date));
-    
-    $stmt = $pdo->prepare("SELECT SUM(calories) as total_cal FROM daily_intake WHERE user_id = ? AND log_date = ?");
-    $stmt->execute([$user_id, $date]);
-    $res = $stmt->fetch();
-    
     $weekly_data[] = [
-        'day' => $day_name,
-        'calories' => $res['total_cal'] ?? 0
+        'label' => $day_name,
+        'calories' => $weekly_results[$date] ?? 0
     ];
 }
 
-$weekly_labels = json_encode(array_column($weekly_data, 'day'));
-$weekly_values = json_encode(array_column($weekly_data, 'calories'));
+// Fetch monthly data (last 30 days)
+$monthly_data = [];
+$start_month = date('Y-m-d', strtotime("-29 days"));
+$stmt = $pdo->prepare("SELECT log_date, SUM(calories) as total_cal FROM daily_intake WHERE user_id = ? AND log_date >= ? GROUP BY log_date");
+$stmt->execute([$user_id, $start_month]);
+$monthly_results = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+for ($i = 29; $i >= 0; $i--) {
+    $date = date('Y-m-d', strtotime("-$i days"));
+    $label = date('M d', strtotime($date));
+    $monthly_data[] = [
+        'label' => $label,
+        'calories' => $monthly_results[$date] ?? 0
+    ];
+}
+
+$week_labels = json_encode(array_column($weekly_data, 'label'));
+$week_values = json_encode(array_column($weekly_data, 'calories'));
+$month_labels = json_encode(array_column($monthly_data, 'label'));
+$month_values = json_encode(array_column($monthly_data, 'calories'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -188,10 +206,11 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
 
         <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 2rem; margin-top: 3rem;">
             <!-- Weekly Chart -->
-            <div class="card">
+            <div class="card" style="cursor: pointer;" onclick="toggleChartRange()" title="Click to toggle between Weekly and Monthly">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h3 style="font-weight: 700;">Weekly Consumption</h3>
-                    <div style="display: flex; gap: 1rem;">
+                    <h3 style="font-weight: 700;" id="chartTitle">Weekly Consumption</h3>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <span id="rangeBadge" style="background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Week</span>
                         <div style="display: flex; align-items: center; font-size: 0.875rem; color: var(--text-muted);">
                             <span class="macro-dot" style="background: var(--primary);"></span> Calories
                         </div>
@@ -199,6 +218,9 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                 </div>
                 <div style="position: relative; height: 350px; width: 100%;">
                     <canvas id="weeklyChart"></canvas>
+                </div>
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+                    <i class="fas fa-mouse-pointer"></i> Click chart to switch between Week and Month
                 </div>
             </div>
 
@@ -304,19 +326,26 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
         Chart.defaults.font.family = "'Outfit', sans-serif";
         Chart.defaults.color = '#64748b';
 
+        // Chart Data
+        const weekLabels = <?php echo $week_labels; ?>;
+        const weekValues = <?php echo $week_values; ?>;
+        const monthLabels = <?php echo $month_labels; ?>;
+        const monthValues = <?php echo $month_values; ?>;
+        let currentRange = 'week';
+
         // Weekly Progress Chart
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
         const gradient = weeklyCtx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(16, 185, 129, 0.8)');
         gradient.addColorStop(1, 'rgba(16, 185, 129, 0.2)');
 
-        new Chart(weeklyCtx, {
+        const nutritionChart = new Chart(weeklyCtx, {
             type: 'bar',
             data: {
-                labels: <?php echo $weekly_labels; ?>,
+                labels: weekLabels,
                 datasets: [{
                     label: 'Calories',
-                    data: <?php echo $weekly_values; ?>,
+                    data: weekValues,
                     backgroundColor: gradient,
                     borderRadius: 8,
                     borderSkipped: false
@@ -326,18 +355,48 @@ $weekly_values = json_encode(array_column($weekly_data, 'calories'));
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' kcal';
+                            }
+                        }
+                    }
                 },
                 scales: {
                     y: { 
                         beginAtZero: true, 
                         grid: { borderDash: [5, 5], drawBorder: false },
-                        ticks: { stepSize: 500 }
+                        ticks: { 
+                            callback: function(value) { return value + ' kcal'; }
+                        }
                     },
                     x: { grid: { display: false } }
                 }
             }
         });
+
+        function toggleChartRange() {
+            const title = document.getElementById('chartTitle');
+            const badge = document.getElementById('rangeBadge');
+            
+            if (currentRange === 'week') {
+                currentRange = 'month';
+                nutritionChart.data.labels = monthLabels;
+                nutritionChart.data.datasets[0].data = monthValues;
+                title.innerText = 'Monthly Consumption';
+                badge.innerText = 'Month';
+            } else {
+                currentRange = 'week';
+                nutritionChart.data.labels = weekLabels;
+                nutritionChart.data.datasets[0].data = weekValues;
+                title.innerText = 'Weekly Consumption';
+                badge.innerText = 'Week';
+            }
+            
+            nutritionChart.update();
+        }
 
         // Macro Distribution Chart
         const macroCtx = document.getElementById('macroChart').getContext('2d');
