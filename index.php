@@ -206,21 +206,26 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
 
         <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 2rem; margin-top: 3rem;">
             <!-- Weekly Chart -->
-            <div class="card" style="cursor: pointer;" onclick="toggleChartRange()" title="Click to toggle between Weekly and Monthly">
+            <div class="card" id="chartCard" style="position: relative;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h3 style="font-weight: 700;" id="chartTitle">Weekly Consumption</h3>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <span id="rangeBadge" style="background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Week</span>
-                        <div style="display: flex; align-items: center; font-size: 0.875rem; color: var(--text-muted);">
-                            <span class="macro-dot" style="background: var(--primary);"></span> Calories
+                    <div>
+                        <h3 style="font-weight: 700;" id="chartTitle">Weekly Consumption</h3>
+                        <div id="activeFoodLabel" style="display: none; font-size: 0.875rem; color: var(--primary); font-weight: 600;">
+                            <i class="fas fa-search-plus"></i> Analyzing: <span id="selectedFoodName"></span>
                         </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button id="resetChartBtn" onclick="resetChart()" style="display: none; background: #f1f5f9; border: none; padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all 0.2s;">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                        <span id="rangeBadge" style="background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; cursor: pointer;" onclick="toggleChartRange()">Week</span>
                     </div>
                 </div>
                 <div style="position: relative; height: 350px; width: 100%;">
                     <canvas id="weeklyChart"></canvas>
                 </div>
                 <div style="text-align: center; margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
-                    <i class="fas fa-mouse-pointer"></i> Click chart to switch between Week and Month
+                    <i class="fas fa-info-circle"></i> Click a food log below to see its weekly impact on this chart.
                 </div>
             </div>
 
@@ -287,7 +292,7 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
                             </tr>
                         <?php else: ?>
                             <?php foreach ($today_logs as $log): ?>
-                                <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                                <tr class="food-log-row" style="border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;" onclick="analyzeFoodImpact('<?php echo addslashes($log['food_name']); ?>', this)">
                                     <td style="padding: 1.25rem 1.5rem; color: var(--text-muted); font-size: 0.875rem;">
                                         <?php echo date('h:i A', strtotime($log['log_time'])); ?>
                                     </td>
@@ -343,13 +348,25 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
             type: 'bar',
             data: {
                 labels: weekLabels,
-                datasets: [{
-                    label: 'Calories',
-                    data: weekValues,
-                    backgroundColor: gradient,
-                    borderRadius: 8,
-                    borderSkipped: false
-                }]
+                datasets: [
+                    {
+                        label: 'Total Calories',
+                        data: weekValues,
+                        backgroundColor: gradient,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        order: 2
+                    },
+                    {
+                        label: 'Food Impact',
+                        data: [],
+                        backgroundColor: '#fbbf24', // Amber for highlight
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        hidden: true,
+                        order: 1
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -359,38 +376,110 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.parsed.y + ' kcal';
+                                return context.dataset.label + ': ' + context.parsed.y + ' kcal';
                             }
                         }
                     }
                 },
                 scales: {
                     y: { 
+                        stacked: true,
                         beginAtZero: true, 
                         grid: { borderDash: [5, 5], drawBorder: false },
                         ticks: { 
                             callback: function(value) { return value + ' kcal'; }
                         }
                     },
-                    x: { grid: { display: false } }
+                    x: { 
+                        stacked: true,
+                        grid: { display: false } 
+                    }
                 }
             }
         });
+
+        async function analyzeFoodImpact(foodName, row) {
+            // UI Feedback
+            document.querySelectorAll('.food-log-row').forEach(r => {
+                r.style.background = 'transparent';
+                r.style.borderLeft = 'none';
+            });
+            row.style.background = '#f8fafc';
+            row.style.borderLeft = '4px solid var(--primary)';
+
+            document.getElementById('activeFoodLabel').style.display = 'block';
+            document.getElementById('selectedFoodName').innerText = foodName;
+            document.getElementById('resetChartBtn').style.display = 'block';
+            
+            try {
+                const response = await fetch(`api/get_food_history.php?food_name=${encodeURIComponent(foodName)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update chart to stacked mode
+                    // Dataset 0 becomes "Other Foods" (Total - Food Impact)
+                    // Dataset 1 becomes "Food Impact"
+                    
+                    const foodData = result.data;
+                    const baseData = weekValues.map((total, index) => Math.max(0, total - (foodData[index] || 0)));
+
+                    nutritionChart.data.datasets[0].data = baseData;
+                    nutritionChart.data.datasets[0].label = 'Other Foods';
+                    nutritionChart.data.datasets[1].data = foodData;
+                    nutritionChart.data.datasets[1].label = foodName;
+                    nutritionChart.data.datasets[1].hidden = false;
+                    
+                    // Force Week view if in Month view
+                    if (currentRange !== 'week') toggleChartRange();
+                    
+                    nutritionChart.update();
+                    
+                    // Scroll to chart
+                    document.getElementById('chartCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } catch (error) {
+                console.error('Error fetching food history:', error);
+            }
+        }
+
+        function resetChart() {
+            document.querySelectorAll('.food-log-row').forEach(r => {
+                r.style.background = 'transparent';
+                r.style.borderLeft = 'none';
+            });
+            
+            document.getElementById('activeFoodLabel').style.display = 'none';
+            document.getElementById('resetChartBtn').style.display = 'none';
+            
+            nutritionChart.data.datasets[0].data = currentRange === 'week' ? weekValues : monthValues;
+            nutritionChart.data.datasets[0].label = 'Total Calories';
+            nutritionChart.data.datasets[1].hidden = true;
+            nutritionChart.data.datasets[1].data = [];
+            
+            nutritionChart.update();
+        }
 
         function toggleChartRange() {
             const title = document.getElementById('chartTitle');
             const badge = document.getElementById('rangeBadge');
             
+            // Hide food impact when switching ranges for simplicity, or we could support it
+            document.getElementById('activeFoodLabel').style.display = 'none';
+            document.getElementById('resetChartBtn').style.display = 'none';
+            nutritionChart.data.datasets[1].hidden = true;
+
             if (currentRange === 'week') {
                 currentRange = 'month';
                 nutritionChart.data.labels = monthLabels;
                 nutritionChart.data.datasets[0].data = monthValues;
+                nutritionChart.data.datasets[0].label = 'Total Calories';
                 title.innerText = 'Monthly Consumption';
                 badge.innerText = 'Month';
             } else {
                 currentRange = 'week';
                 nutritionChart.data.labels = weekLabels;
                 nutritionChart.data.datasets[0].data = weekValues;
+                nutritionChart.data.datasets[0].label = 'Total Calories';
                 title.innerText = 'Weekly Consumption';
                 badge.innerText = 'Week';
             }
