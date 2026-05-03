@@ -1,11 +1,10 @@
 <?php 
 require_once 'includes/config.php'; 
 
-// Check login or use dummy for demo
+// Check login
 if (!isset($_SESSION['user_id'])) {
-    $stmt = $pdo->query("SELECT id FROM users LIMIT 1");
-    $user = $stmt->fetch();
-    if ($user) $_SESSION['user_id'] = $user['id'];
+    header("Location: login.php");
+    exit;
 }
 
 $user_id = $_SESSION['user_id'] ?? 0;
