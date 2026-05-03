@@ -40,39 +40,48 @@ $cal_percentage = min(100, ($totals['cal'] / $daily_goal) * 100);
 // Fetch weekly data (last 7 days)
 $weekly_data = [];
 $start_week = date('Y-m-d', strtotime("-6 days"));
-$stmt = $pdo->prepare("SELECT log_date, SUM(calories) as total_cal FROM daily_intake WHERE user_id = ? AND log_date >= ? GROUP BY log_date");
+$stmt = $pdo->prepare("SELECT log_date, SUM(calories) as total_cal, GROUP_CONCAT(CONCAT(food_name, ' (', calories, ' kcal)') SEPARATOR '|') as food_list FROM daily_intake WHERE user_id = ? AND log_date >= ? GROUP BY log_date");
 $stmt->execute([$user_id, $start_week]);
-$weekly_results = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+$weekly_raw = $stmt->fetchAll();
+$weekly_results = [];
+foreach($weekly_raw as $row) $weekly_results[$row['log_date']] = $row;
 
 for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-$i days"));
     $day_name = date('D', strtotime($date));
     $weekly_data[] = [
         'label' => $day_name,
-        'calories' => $weekly_results[$date] ?? 0
+        'calories' => $weekly_results[$date]['total_cal'] ?? 0,
+        'foods' => $weekly_results[$date]['food_list'] ?? ''
     ];
 }
 
 // Fetch monthly data (last 30 days)
 $monthly_data = [];
 $start_month = date('Y-m-d', strtotime("-29 days"));
-$stmt = $pdo->prepare("SELECT log_date, SUM(calories) as total_cal FROM daily_intake WHERE user_id = ? AND log_date >= ? GROUP BY log_date");
+$stmt = $pdo->prepare("SELECT log_date, SUM(calories) as total_cal, GROUP_CONCAT(CONCAT(food_name, ' (', calories, ' kcal)') SEPARATOR '|') as food_list FROM daily_intake WHERE user_id = ? AND log_date >= ? GROUP BY log_date");
 $stmt->execute([$user_id, $start_month]);
-$monthly_results = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+$monthly_raw = $stmt->fetchAll();
+$monthly_results = [];
+foreach($monthly_raw as $row) $monthly_results[$row['log_date']] = $row;
 
 for ($i = 29; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-$i days"));
     $label = date('M d', strtotime($date));
     $monthly_data[] = [
         'label' => $label,
-        'calories' => $monthly_results[$date] ?? 0
+        'calories' => $monthly_results[$date]['total_cal'] ?? 0,
+        'foods' => $monthly_results[$date]['food_list'] ?? ''
     ];
 }
 
 $week_labels = json_encode(array_column($weekly_data, 'label'));
 $week_values = json_encode(array_column($weekly_data, 'calories'));
+$week_foods = json_encode(array_column($weekly_data, 'foods'));
+
 $month_labels = json_encode(array_column($monthly_data, 'label'));
 $month_values = json_encode(array_column($monthly_data, 'calories'));
+$month_foods = json_encode(array_column($monthly_data, 'foods'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -334,9 +343,12 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
         // Chart Data
         const weekLabels = <?php echo $week_labels; ?>;
         const weekValues = <?php echo $week_values; ?>;
+        const weekFoods = <?php echo $week_foods; ?>;
         const monthLabels = <?php echo $month_labels; ?>;
         const monthValues = <?php echo $month_values; ?>;
+        const monthFoods = <?php echo $month_foods; ?>;
         let currentRange = 'week';
+        let currentFoods = weekFoods;
 
         // Weekly Progress Chart
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
@@ -374,9 +386,23 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: '700' },
+                        bodyFont: { size: 13 },
                         callbacks: {
                             label: function(context) {
                                 return context.dataset.label + ': ' + context.parsed.y + ' kcal';
+                            },
+                            afterBody: function(context) {
+                                const index = context[0].dataIndex;
+                                const foodStr = currentFoods[index];
+                                if (!foodStr) return '\nNo logs recorded';
+                                
+                                const foods = foodStr.split('|');
+                                let lines = ['\nDaily Breakdown:'];
+                                foods.forEach(f => lines.push('• ' + f));
+                                return lines;
                             }
                         }
                     }
@@ -470,6 +496,7 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
 
             if (currentRange === 'week') {
                 currentRange = 'month';
+                currentFoods = monthFoods;
                 nutritionChart.data.labels = monthLabels;
                 nutritionChart.data.datasets[0].data = monthValues;
                 nutritionChart.data.datasets[0].label = 'Total Calories';
@@ -477,6 +504,7 @@ $month_values = json_encode(array_column($monthly_data, 'calories'));
                 badge.innerText = 'Month';
             } else {
                 currentRange = 'week';
+                currentFoods = weekFoods;
                 nutritionChart.data.labels = weekLabels;
                 nutritionChart.data.datasets[0].data = weekValues;
                 nutritionChart.data.datasets[0].label = 'Total Calories';
